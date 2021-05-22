@@ -1,11 +1,11 @@
 package main;
 
-public class rule {
-
+public class Production {
+	
 	private String left;
-	private String[] rigth;
+	private String rigth;
 
-	rule(String left, String[] rigth){
+	Production(String left, String rigth) {
 		this.setLeft(left);
 		this.setRigth(rigth);
 	}
@@ -27,14 +27,14 @@ public class rule {
 	/**
 	 * @return the rigth
 	 */
-	public String[] getRigth() {
+	public String getRigth() {
 		return rigth;
 	}
 
 	/**
 	 * @param rigth the rigth to set
 	 */
-	public void setRigth(String[] rigth) {
+	public void setRigth(String rigth) {
 		this.rigth = rigth;
 	}
 
