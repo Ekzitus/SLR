@@ -6,9 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
  
@@ -20,14 +19,12 @@ public class Main {
      */     
     static List<Rule> rules = new ArrayList<>();
     static List<Production> productions = new ArrayList<>();
-    static Map<Integer, Item> items = new HashMap<>();
+    static List<Item> items = new ArrayList<>();
     static List<String> noterminal = new ArrayList<>();                // Массив нетерминальных символов
     static List<String> terminal = new ArrayList<>();              // Массив терминальных символов
-    static Symbols symbols = new Symbols();
     static String[] strings;
     
     public static void main(String[] args) {
-//      ArrayList<symbol> symbol = new ArrayList<symbol>();
         String filename = "grammars/g1";                                       // Имя файла с грамматикой заданной формате БНФ     
         File file = new File(filename);     
         String date = Read(file);
@@ -39,14 +36,14 @@ public class Main {
          * Для захвата правой части правила состоящего из любых символов 
          * и присваивания этой группе имя rigth
          */
-        String regex = "(?<left>[a-zA-Z]+)→(?<right>.+)";
+        String regex = "(?<left>.+)→(?<right>.+)";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(date);
         int i = 0;
         int j = 0;
         while(matcher.find()) {
-            noterminal.add(matcher.group("left"));                          // Помещяет
-            symbols.setSymbols(matcher.group("left") + "|");
+            Symbols.addNoTerminals(matcher.group("left"));                          // Помещяет
+            Symbols.addSymbols(matcher.group("left") + "|");
             String regex_right = "\\|";                                     // Разделитель правой части правила
             Pattern pattern_right = Pattern.compile(regex_right);
             strings = pattern_right.split(matcher.group("right"));  		// Разделяет правую часть правила по заданному разделителю
@@ -60,22 +57,21 @@ public class Main {
         
         for(i = 0; i < rules.size(); i++) {
             for(String s: rules.get(i).getRigth()) {
-                String[] arr = noterminal.toArray(new String[noterminal.size()]);
-                pattern = Pattern.compile("[^" + Arrays.toString(arr) + "]");
+                pattern = Pattern.compile("[^" + Arrays.toString(Symbols.getNoTerminals().toArray()) + "]");
                 matcher = pattern.matcher(s);
                 while(matcher.find()) {
                     String ter = s.substring(matcher.start(), matcher.end());// Найденный терминал
-                    terminal.add(ter);
+                    Symbols.addTerminals(ter);
                     if(ter.equals("+")) {
-                    	symbols.setSymbols("\\" + ter + "|");
+                    	Symbols.addSymbols("\\" + ter + "|");
                     }else if(ter.equals("(")) {
-                    	symbols.setSymbols("\\" + ter + "|");
+                    	Symbols.addSymbols("\\" + ter + "|");
                     }else if(ter.equals(")")) {
-                    	symbols.setSymbols("\\" + ter + "|");
+                    	Symbols.addSymbols("\\" + ter + "|");
                     }else if(ter.equals("*")) {
-                    	symbols.setSymbols("\\" + ter + "|");
+                    	Symbols.addSymbols("\\" + ter + "|");
                     }else {
-                    	symbols.setSymbols(ter + "|");
+                    	Symbols.addSymbols(ter + "|");
                     }
                 }
             }
@@ -109,41 +105,39 @@ public class Main {
 //          i++;
 //      }
         
- 
-        
-        pattern = Pattern.compile(symbols.getSymbols());
-        matcher = pattern.matcher(rules.get(2).getRigth()[1]);
-        matcher.find();
         System.out.println(firstTerminal("E"));
         System.out.println(nextTerminal("id"));
+        List<Item> a = new ArrayList<>();
+        a.add(new Item(productions.get(0),0));
+        for(Item item: closeItem(a)) {
+        	System.out.println("Left: " + item.getProduction().getLeft() + "\n" 
+        			+ "Rigth: " + item.getProduction().getRigth() + "\n"
+        			+ "Marker: " + item.getMarker() + "\n"
+        			+ "Marker Type: " + item.getMarkerType());
+        }
     }
     
-//    void closeItem(Map<Integer, item> I){
-//        Map<Integer, item> J = I;
-//        for(int i = 0; i < J.size(); i++) {
-//            for (String _item: J.get(i).markers) {
-//                String[] arr = terminal.toArray(new String[terminal.size()]);
-//                Pattern pattern = Pattern.compile(Arrays.toString(arr));
-//                Matcher matcher = pattern.matcher(_item);
-//                if(matcher.lookingAt()) {
-//                    for(rule rule1: rules) {
-//                        if(rule1.getLeft() == _item) {
-//                            J.put(J.size() + 1, items.get("rule1").getMarker(i));
-//                        }
-//                                                
-//                    }
-//                }
-//            }
-//        }
-//    }
+    static List<Item> closeItem(List<Item> I){
+    	List<Item> J = new ArrayList<>(I);
+    	for(Item item: I) {
+    		if(item.getMarkerType().equals("NoTerminal")) {
+    			for(Production production: productions) {
+    				if(production.getLeft().equals(item.getMarker())) {
+    					J.add(new Item(production, 0));
+    				}
+    			}
+    		}
+    	}
+    	return J;
+    }
     
     
     
     static ArrayList<String> firstTerminal(String X) {
         
         int flag = 0;
-        for(int i = 0; i < terminal.size(); i++) {
-            if(X.equals(terminal.get(i))) {
+        for(int i = 0; i < Symbols.getTerminals().size(); i++) {
+            if(X.equals(Symbols.getTerminals().get(i))) {
                 flag = 1;
             }
         }
@@ -158,7 +152,7 @@ public class Main {
         for(int i = 0; i < rules.size(); i++) {
             if(rules.get(i).getLeft().equals(X)) {
                 for(int j = 0; j < rules.get(i).getRigth().length;j++) {
-                    Pattern pattern = Pattern.compile(symbols.getSymbols());
+                    Pattern pattern = Pattern.compile(Symbols.getSymbols());
                     Matcher matcher = pattern.matcher(rules.get(i).getRigth()[j]);
                     matcher.find();
                     if(!rules.get(i).getRigth()[j].substring(matcher.start(), matcher.end()).equals(X)) {
@@ -177,7 +171,7 @@ public class Main {
                 int flag = 0;
                 int mstart = 0;
                 int mend = 0;
-                Pattern pattern = Pattern.compile(symbols.getSymbols());
+                Pattern pattern = Pattern.compile(Symbols.getSymbols());
                 Matcher matcher = pattern.matcher(rules.get(i).getRigth()[j]);
                 String s = null;
                 while(matcher.find()) {
