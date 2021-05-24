@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
  
@@ -17,11 +19,11 @@ public class Main {
      * Массив правил 
      * Правила класс <String, String[]>
      */     
-    static List<Rule> rules = new ArrayList<>();
-    static List<Production> productions = new ArrayList<>();
-    static List<Item> items = new ArrayList<>();
-    static List<String> noterminal = new ArrayList<>();                // Массив нетерминальных символов
-    static List<String> terminal = new ArrayList<>();              // Массив терминальных символов
+    static List<Rule> 		rules = 		new ArrayList<>();
+    static List<Production> productions = 	new ArrayList<>();
+    static List<Item> 		items = 		new ArrayList<>();
+    static List<List<Item>> itemsMass = 	new ArrayList<>();
+    static Map<Key, FSM>	fsm	=			new HashMap<>();
     static String[] strings;
     
     public static void main(String[] args) {
@@ -76,59 +78,60 @@ public class Main {
                 }
             }
         };
-        
-        
-        /*
-         * Забиваю массив пунктов пунктами
-         * По типу (Правило (String), Пункты (item.getMarker (Номер маркера (int)))
-         */
-        
-//      pattern = Pattern.compile(regex);
-//      matcher = pattern.matcher(date);
-//      i = 0;
-//      while(matcher.find()) {
-//          String regex_right = "\\|";                             // Разделитель правой части правила
-//          Pattern pattern_right = Pattern.compile(regex_right);
-//          strings = pattern_right.split(matcher.group("right"));  // Разделяет правую часть правила по заданному разделителю
-//          rules.add(i, new rule(matcher.group("left"), strings));
-//          for(int j = 0; j < strings.length; j++) {
-//              Pattern pattern_symbol = Pattern.compile(symbol);
-//              matcher = pattern_symbol.matcher(strings[j]);
-//              ArrayList<String> item = new ArrayList<String>((int)matcher.results().count());
-//              int q = 0;
-//              while(matcher.find()) {
-//                  item.add(strings[j].substring(matcher.start(), matcher.end()));
-//                  q++;
-//              }
-//              items.put(matcher.group("left") + "→"+ strings[j], new item(item));
-//          }
-//          i++;
-//      }
-        
+    
         System.out.println(firstTerminal("E"));
         System.out.println(nextTerminal("id"));
-        List<Item> a = new ArrayList<>();
-        a.add(new Item(productions.get(0),0));
-        for(Item item: closeItem(a)) {
+        itemsMass.add(items);
+        items.add(new Item(productions.get(0),0));
+        int index = 0;
+        
+        for(Item item: closeItem(itemsMass.get(index), index)) {
         	System.out.println("Left: " + item.getProduction().getLeft() + "\n" 
         			+ "Rigth: " + item.getProduction().getRigth() + "\n"
         			+ "Marker: " + item.getMarker() + "\n"
-        			+ "Marker Type: " + item.getMarkerType());
+        			+ "Marker Type: " + item.getMarkeredType());
         }
     }
     
-    static List<Item> closeItem(List<Item> I){
-    	List<Item> J = new ArrayList<>(I);
-    	for(Item item: I) {
-    		if(item.getMarkerType().equals("NoTerminal")) {
-    			for(Production production: productions) {
-    				if(production.getLeft().equals(item.getMarker())) {
-    					J.add(new Item(production, 0));
+    static void addReducing(List<Item> i, int index) {
+    	for(Item item: i) {
+    		if(item.getMarkered().equals(item.getMarkeredEnd())) {
+    			if(item.getProduction().getLeft().equals("E'")) {			// Видим стартовый символ
+    				fsm.put(new Key(i, index, ""), new FSM(i, index, ""));	// Записываем событие "УСПЕХ"
+    				fsm.get(new Key(i, index, "")).setSuccess();			// для поступаемой на вход пустой строки
+    			}else {
+    				for(String term: nextTerminal(item.getProduction().getLeft())) {
+    					fsm.put(new Key(i, index, term), new FSM(i, index, term));
+    					fsm.get(new Key(i, index, term)).setReduce(item.getProduction());
     				}
     			}
     		}
     	}
-    	return J;
+    }
+    
+    static List<Item> shiftState(List<Item> i, int index, String x){
+    	List<Item> result = new ArrayList<>();
+    	for(Item item: i) {
+    		if(item.getMarkered().equals(x)) {
+    			result.add(new Item(item.getProduction(), item.getMarker() + 1));
+    		}
+    	}
+
+    	return closeItem(result, index);
+    }
+    
+    static List<Item> closeItem(List<Item> i, int index){
+    	List<Item> j = new ArrayList<>(i);
+    	for(Item item: i) {
+    		if(item.getMarkeredType().equals("NoTerminal")) {
+    			for(Production production: productions) {
+    				if(production.getLeft().equals(item.getMarkered())) {
+    					j.add(new Item(production, 0));
+    				}
+    			}
+    		}
+    	}
+    	return j;
     }
     
     

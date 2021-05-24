@@ -7,13 +7,21 @@ import java.util.regex.Pattern;
 public class Item {
 
 	private Production production;
-	private String marker;
+	private String 		markered;
+	private int 		marker;
 
 	Item(Production production, int marker){
 		this.setProduction(production);
+		this.setMarkered(marker);
 		this.setMarker(marker);
+	}
 
-		
+	private void setMarker(int marker) {
+		this.marker = marker;
+	}
+	
+	public int getMarker() {
+		return marker;
 	}
 
 	/**
@@ -26,38 +34,47 @@ public class Item {
 	/**
 	 * @param production the production to set
 	 */
-	public void setProduction(Production production) {
+	private void setProduction(Production production) {
 		this.production = production;
 	}
 	
-	String getMarkerType() {
-		Pattern patternNoTerminals = Pattern.compile(Arrays.toString(Symbols.getNoTerminals().toArray()));
-		Matcher matcherNoTerminals = patternNoTerminals.matcher(marker);
-		if(matcherNoTerminals.lookingAt()) {
-			return "NoTerminal";
-		}else {
-			return "Terminal";
+	public String getMarkeredType() {
+		if(!markered.equals("")) {
+			Pattern patternNoTerminals = Pattern.compile(Arrays.toString(Symbols.getNoTerminals().toArray()));
+			Matcher matcherNoTerminals = patternNoTerminals.matcher(markered);
+			if(matcherNoTerminals.lookingAt()) {
+				return "NoTerminal";
+			}else {
+				return "Terminal";
+			}
 		}
+		return "";
 	}
 	
-	String getMarker(){
-		return marker;
+	public String getMarkered(){
+		return markered;
 	}
 
 	/**
 	 * @param marker the marker to set
 	 */
-	public void setMarker(int marker) {
+	private void setMarkered(int marker) {
 		String rigth = this.production.getRigth();
 		Pattern patternSymbols = Pattern.compile(Symbols.getSymbols());
 		Matcher matcherSymbols = patternSymbols.matcher(rigth);
+		boolean flag = false;
 		for(int i = 0; i <= marker; i++) {
-				matcherSymbols.find();
+				flag = matcherSymbols.find();
 		}
-		this.marker = rigth.substring(matcherSymbols.start(), matcherSymbols.end());
+		if(flag) {
+			this.markered = rigth.substring(matcherSymbols.start(), matcherSymbols.end());
+		}else {
+			this.markered = "";
+		}
+		
 	}
 	
-	String getEnd(){
+	String getMarkeredEnd(){
 		String rigth = this.production.getRigth();
 		Pattern patternSymbols = Pattern.compile(Symbols.getSymbols() + "$");
 		Matcher matcherSymbols = patternSymbols.matcher(rigth);
