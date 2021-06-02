@@ -1,6 +1,7 @@
 package main;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Symbols {
@@ -21,8 +22,14 @@ public class Symbols {
 		}
 	}
 	
+	final static List<String> getSymbolsList() {
+		List<String> array = new ArrayList<>(noTerminals);
+		array.addAll(terminals);
+		return array;
+	}
+	
 	final static void addTerminals(String terminal) {
-		terminals.add(terminal);
+		terminals.add(terminal + "|");
 	}
 	
 	final static List<String> getTerminals() {		
@@ -33,7 +40,7 @@ public class Symbols {
 		noTerminals.add(noTerminal);
 	}
 	
-	final static List<String> getNoTerminals() {
-		return noTerminals;
+	final static String getNoTerminals() {
+		return Arrays.toString(noTerminals.toArray());
 	}
 }

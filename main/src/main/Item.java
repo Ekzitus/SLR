@@ -1,6 +1,5 @@
 package main;
 
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,7 +39,7 @@ public class Item {
 	
 	public String getMarkeredType() {
 		if(!markered.equals("")) {
-			Pattern patternNoTerminals = Pattern.compile(Arrays.toString(Symbols.getNoTerminals().toArray()));
+			Pattern patternNoTerminals = Pattern.compile(Symbols.getNoTerminals());
 			Matcher matcherNoTerminals = patternNoTerminals.matcher(markered);
 			if(matcherNoTerminals.lookingAt()) {
 				return "NoTerminal";
