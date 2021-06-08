@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Symbols {
 	
-	static String symbols = "EOF|";
+	static String symbols = "";
 	static List<String> terminals = new ArrayList<>();
 	static List<String> noTerminals = new ArrayList<>();
 	
@@ -29,7 +29,7 @@ public class Symbols {
 	}
 	
 	final static void addTerminals(String terminal) {
-		terminals.add(terminal + "|");
+		terminals.add(terminal);
 	}
 	
 	final static List<String> getTerminals() {		

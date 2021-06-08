@@ -75,10 +75,13 @@ public class Item {
 	
 	String getMarkeredEnd(){
 		String rigth = this.production.getRigth();
-		Pattern patternSymbols = Pattern.compile(Symbols.getSymbols() + "$");
+		Pattern patternSymbols = Pattern.compile(Symbols.getSymbols());
 		Matcher matcherSymbols = patternSymbols.matcher(rigth);
-		matcherSymbols.find();
-		return rigth.substring(matcherSymbols.start(), matcherSymbols.end());
+		String end = null;
+		while(matcherSymbols.find()) {
+			end = rigth.substring(matcherSymbols.start(), matcherSymbols.end());
+		}
+		return end;
 	}
 
 }

@@ -5,32 +5,78 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Main {
 
-	/*
-	* Массив правил 
-	* Правила класс <String, String[]>
-	*/
 	static List<Production> productions = 	new ArrayList<>();
 	static Map<Key, FSM>	fsm = 		new HashMap<>();
+	static String simvoli = "";
 
-	public static void main(String[] args) {
-    	System.out.println("arg0 = srcGrammar; arg1 = Input");
+	public static void main(String[] args) throws Exception {
+//    	System.out.println("arg0 = srcGrammar; arg1 = Input");
     	String filename = args[0];									// Имя файла с грамматикой заданной формате БНФ
     	String grammar = Read(filename);
     	genSymbols(grammar);
+//    	System.out.println(Symbols.getSymbols() + "\n"
+//    			+ Symbols.getNoTerminals() + "\n" 
+//    			+ Arrays.toString(Symbols.getTerminals().toArray()) + "\n"
+//    			+ Arrays.toString(firstTerminal("E").toArray()) + "\n"
+//   			+ Arrays.toString(nextTerminal("E").toArray()));
     	buildFSM();
     	
-    	System.out.println(args[1]);
+//    	System.out.println(args[1]);
+    	Pattern patternInput = Pattern.compile(Symbols.getSymbols());
+    	Matcher matcherInput = patternInput.matcher(args[1]);
+    	matcherInput.find();
+    	String term = args[1].substring(matcherInput.start(),matcherInput.end());
+    	simvoli += term;
+//        System.out.println(term);
+        boolean accepted = false;
+        Stack<String> stack = new Stack<>();
+        stack.push("0");
+        while(!accepted) {
+        	String[] s = {stack.peek(), term};
+        	FSM state = fsm.get(new Key(s));
+        	switch(state.operation) {
+        	case "Success":
+        		accepted = true;
+        		break;
+        	case "Shift":
+        		stack.push(Integer.toString(state.index));
+        		if(matcherInput.find()) {
+		    		term = args[1].substring(matcherInput.start(),matcherInput.end());
+//		            System.out.println(term);
+//		            simvoli += term;
+        		}else {
+        			term = "";
+//		            System.out.println(term);
+        		}
+        		break;
+        	case "Reduce":
+        		Pattern patternReduce = Pattern.compile(Symbols.getSymbols());
+            	Matcher matcherReduce = patternReduce.matcher(state.production.getRigth());
+        		while(matcherReduce.find()) {
+        			simvoli = simvoli.substring(0, simvoli.length() - (matcherReduce.end() - matcherReduce.start()));
+        			stack.pop();
+        		}
+            	s = new String[]{stack.peek(), state.production.getLeft()};
+            	simvoli += state.production.getLeft();
+            	//stack.push(fsm.get(new Key(s)).production.getLeft());
+            	stack.push(Integer.toString(fsm.get(new Key(s)).index));
+        		break;
+        	default:
+        		System.out.println("Пук-среньк");;
+        	}
+        }
+    	
     }
-
-	
 	
 	static void buildFSM() {
 		List<Item> itemStart = new ArrayList<>(1);
@@ -39,14 +85,41 @@ public class Main {
 		List<List<Item>> states = new ArrayList<>();
 		states.add(closeItem(itemStart));
 		
-		for(int i = 0; i <= states.size(); i++) {
+		for(int i = 0; i < states.size(); i++) {
 			addReducing(states.get(i), i);
 			for(String x: Symbols.getSymbolsList()) {
-				states.add(shiftState(states.get(i), i, x));
-				String[] s = {Integer.toString(i), x};
-				Key key = new Key(s);
-				fsm.put(key, new FSM(i, x));
-				fsm.get(key).setShift(states.size());;
+				List<Item> shiftStateReturn = shiftState(states.get(i), i, x);
+				if(!shiftStateReturn.isEmpty()) {
+					boolean flag = true;
+					int indexBack = 0;
+					for(int k = 0; k < states.size(); k++) {
+						int count = 0;
+						if(states.get(k).size() == shiftStateReturn.size()) {
+							for(int j = 0; j < states.get(k).size(); j++) {
+								if(states.get(k).get(j).getProduction() == shiftStateReturn.get(j).getProduction() &&
+									states.get(k).get(j).getMarker() == shiftStateReturn.get(j).getMarker())
+									count++;
+							}
+							if(count == states.get(k).size()) {
+								flag = false;
+								indexBack = k;
+							}
+						}
+					}
+					if(flag) 
+					{
+						states.add(shiftStateReturn);
+						String[] s = {Integer.toString(i), x};
+						Key key = new Key(s);
+						fsm.put(key, new FSM(i, x));
+						fsm.get(key).setShift(states.size()-1);
+					}else {
+						String[] s = {Integer.toString(i), x};
+						Key key = new Key(s);
+						fsm.put(key, new FSM(i, x));
+						fsm.get(key).setShift(indexBack);
+					}
+				}
 			}
 		}
 		
@@ -99,14 +172,14 @@ public class Main {
 
     static ArrayList<String> firstTerminal(String X) {
         
-        int flag = 0;
+        boolean flag = false;
         for(int i = 0; i < Symbols.getTerminals().size(); i++) {
             if(X.equals(Symbols.getTerminals().get(i))) {
-                flag = 1;
+                flag = true;
             }
         }
         
-        if(flag == 1) {
+        if(flag) {
             ArrayList<String> result1 = new ArrayList<String>();
             result1.add(X);
             return result1;
@@ -164,30 +237,42 @@ public class Main {
         
     }
 
-    static List<Item> closeItem(List<Item> i){
-    	List<Item> j = new ArrayList<>(i);
-    	for(Item item: i) {
-    		if(item.getMarkeredType().equals("NoTerminal")) {
+    static List<Item> closeItem(List<Item> i){    	
+    	for(int k = 0; k < i.size(); k++) {
+    		if(i.get(k).getMarkeredType().equals("NoTerminal")) {
     			for(Production production: productions) {
-    				if(production.getLeft().equals(item.getMarkered())) {
-    					j.add(new Item(production, 0));
+    				if(production.getLeft().equals(i.get(k).getMarkered())) {
+    					boolean flag = true;
+    					for(int j = 0; j < i.size(); j++) {
+    						if(i.get(j).getProduction().getLeft().equals(production.getLeft()) &&
+    							i.get(j).getProduction().getRigth().equals(production.getRigth()) &&
+    							i.get(j).getMarker() == 0) {
+    							flag = false;
+    						};
+    					}
+    					if(flag) {
+        					i.add(new Item(production, 0));
+    					}
     				}
     			}
     		}
     	}
-    	return j;
+    	
+    	return i;
     }
 
     static void addReducing(List<Item> i, int index) {
     	for(Item item: i) {
-    		if(item.getMarkered().equals(item.getMarkeredEnd())) {
+    		if(item.getMarkered().equals("")) {
     			if(item.getProduction().getLeft().equals("E'")) {			// Видим стартовый символ
     				String[] s = {Integer.toString(index), ""};
     				Key key = new Key(s);
     				fsm.put(key, new FSM(index, ""));	// Записываем событие "УСПЕХ"
     				fsm.get(key).setSuccess();			// для поступаемой на вход пустой строки
     			}else {
-    				for(String term: nextTerminal(item.getProduction().getLeft())) {
+    				ArrayList<String> array = nextTerminal(item.getProduction().getLeft());
+    				array.add("");
+    				for(String term: array) {
     					String[] s = {Integer.toString(index), term};
         				Key key = new Key(s);
     					fsm.put(key, new FSM(index, term));
