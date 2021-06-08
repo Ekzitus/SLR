@@ -36,11 +36,12 @@ public class Main {
     	Matcher matcherInput = patternInput.matcher(args[1]);
     	matcherInput.find();
     	String term = args[1].substring(matcherInput.start(),matcherInput.end());
-    	simvoli += term;
+//    	simvoli += term;
 //        System.out.println(term);
         boolean accepted = false;
         Stack<String> stack = new Stack<>();
         stack.push("0");
+        System.out.println(stack);
         while(!accepted) {
         	String[] s = {stack.peek(), term};
         	FSM state = fsm.get(new Key(s));
@@ -50,11 +51,16 @@ public class Main {
         		break;
         	case "Shift":
         		stack.push(Integer.toString(state.index));
+        		System.out.println(stack);
         		if(matcherInput.find()) {
+        			simvoli += term;
+        			System.out.println(simvoli);
 		    		term = args[1].substring(matcherInput.start(),matcherInput.end());
 //		            System.out.println(term);
 //		            simvoli += term;
         		}else {
+        			simvoli += term;
+        			System.out.println(simvoli);
         			term = "";
 //		            System.out.println(term);
         		}
@@ -65,11 +71,14 @@ public class Main {
         		while(matcherReduce.find()) {
         			simvoli = simvoli.substring(0, simvoli.length() - (matcherReduce.end() - matcherReduce.start()));
         			stack.pop();
+//        			System.out.println(stack);
         		}
             	s = new String[]{stack.peek(), state.production.getLeft()};
             	simvoli += state.production.getLeft();
+            	System.out.println(simvoli);
             	//stack.push(fsm.get(new Key(s)).production.getLeft());
             	stack.push(Integer.toString(fsm.get(new Key(s)).index));
+            	System.out.println(stack);
         		break;
         	default:
         		System.out.println("Пук-среньк");;
