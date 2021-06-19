@@ -14,7 +14,8 @@ public class Symbols {
     }
 
     String getSymbols() {
-        return !symbols.endsWith("|") ? symbols : symbols.substring(0, symbols.length() - 1);
+        if (!symbols.endsWith("|")) return symbols;
+        return symbols.substring(0, symbols.length() - 1);
     }
 
     List<String> getSymbolsList() {
