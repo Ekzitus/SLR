@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 public class Analizer {
     List<Production> productions = new ArrayList<>();
     Map<Key, FSM> fsm = new HashMap<>();
+    FSM state;
+    int reduceCount;
     String simvoli = "";
     String _START_ = "";
     Pattern patternInput;
@@ -34,8 +36,9 @@ public class Analizer {
     }
 
     boolean step(String str){
+        reduceCount = 0;
         var s = new String[]{stack.peek(), term};
-        FSM state = fsm.get(new Key(s));
+        state = fsm.get(new Key(s));
         switch (state.operation) {
             case "Success" -> {
                 return true;
@@ -49,6 +52,7 @@ public class Analizer {
                 var patternReduce = Pattern.compile(symbols.getSymbols());
                 var matcherReduce = patternReduce.matcher(state.production.getRigth());
                 while (matcherReduce.find()) {
+                    reduceCount++;
                     simvoli = simvoli.substring(0, simvoli.length() - (matcherReduce.end() - matcherReduce.start()));
                     stack.pop();
                 }
