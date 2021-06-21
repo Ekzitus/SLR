@@ -2,6 +2,7 @@ package sample;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.css.Match;
 import javafx.fxml.FXML;
 import javafx.geometry.HPos;
 import javafx.geometry.VPos;
@@ -16,6 +17,7 @@ import org.graphstream.ui.fx_viewer.FxViewPanel;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Controller {
@@ -32,7 +34,7 @@ public class Controller {
 
     @FXML
     private void fileClicked(){
-        var fileChooser = new FileChooser();
+        FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File(System.getProperty("user.home")));
         file = fileChooser.showOpenDialog(TextField.getScene().getWindow());
     }
@@ -108,19 +110,19 @@ public class Controller {
                 while(GridPane.getRowConstraints().size() > 0) GridPane.getRowConstraints().remove(0);
                 while(GridPane.getColumnConstraints().size() > 0) GridPane.getColumnConstraints().remove(0);
                 while(GridPane.getChildren().size() > 0) GridPane.getChildren().remove(0);
-                var row0 = new RowConstraints(10, 30, Double.MAX_VALUE);
+                RowConstraints row0 = new RowConstraints(10, 30, Double.MAX_VALUE);
                 row0.setValignment(VPos.CENTER);
-                row0.setVgrow(Priority.SOMETIMES);
+                row0.setVgrow(Priority.ALWAYS);
                 GridPane.getRowConstraints().add(row0);
-                var newAnalizer = new Analizer(new String[]{String.valueOf(file), TextField.getText()});
-                var flag = false;
-                var reduceCount = 0;
-                var finalReduceCount = 0;
+                Analizer newAnalizer = new Analizer(new String[]{String.valueOf(file), TextField.getText()});
+                boolean flag = false;
+                int reduceCount = 0;
+                int finalReduceCount = 0;
                 while (!flag) {
                     flag = newAnalizer.step(TextField.getText());
                     if(newAnalizer.state.operation.equals("Shift")){
-                        var pattern = Pattern.compile(newAnalizer.symbols.getSymbols());
-                        var matcher = pattern.matcher(newAnalizer.simvoli);
+                        Pattern pattern = Pattern.compile(newAnalizer.symbols.getSymbols());
+                        Matcher matcher = pattern.matcher(newAnalizer.simvoli);
                         int count = 0;
                         while (matcher.find()) count++;
                         int finalCount = GridPane.getColumnCount() + 1;
@@ -129,7 +131,7 @@ public class Controller {
                         символов больше чем колонок
                         */
                         if (GridPane.getColumnCount() < finalCount) {
-                            var column = new ColumnConstraints();
+                            ColumnConstraints column = new ColumnConstraints();
                             column.setPercentWidth(50);
                             column.setHalignment(HPos.CENTER);
                             column.setHgrow(Priority.SOMETIMES);
@@ -141,15 +143,15 @@ public class Controller {
                         for (int i = 0; i < GridPane.getColumnCount(); i++) {
                             for (int j = 0; j < GridPane.getRowCount(); j++) {
                                 if (getNodeByRowColumnIndex(j, i, GridPane) == null) {
-                                    var label = new Label("");
+                                    Label label = new Label("");
                                     GridPane.add(label, i, j);
                                     GridPane.setHalignment(label, HPos.CENTER);
                                 }
                             }
                         }
                         matcher = pattern.matcher(newAnalizer.simvoli);
-                        var i = reduceCount - 1;
-                        var j = finalReduceCount - 1;
+                        int i = reduceCount - 1;
+                        int j = finalReduceCount - 1;
                         if(i < 0) i = 0;
                         if(j < 0) j = 0;
                         while(j != 0){
@@ -175,21 +177,26 @@ public class Controller {
 //                                }
                                 i++;
                             }else{
-                                var label = (Label) getNodeByRowColumnIndex(0, i, GridPane);
-                                if(label.getText().equals(""))
-                                    label.setText(newAnalizer.simvoli.substring(matcher.start(), matcher.end()));
+                                Label label = (Label) getNodeByRowColumnIndex(0, i, GridPane);
+                                Label node = getNodeByRowColumnIndex(0, i, GridPane);
+                                label.setScaleX(2);
+                                label.setScaleY(2);
+                                if(label.getText().equals("") && GridPane.getColumnCount() > 1)
+                                    label.setText("—\t" + newAnalizer.simvoli.substring(matcher.start(), matcher.end()));
+                                else if (label.getText().equals(""))
+                                    label.setText("|\n" + newAnalizer.simvoli.substring(matcher.start(), matcher.end()));
                                 i++;
                             }
                         }
                     }else{
 //                        fxViewPanel.getViewer().getGraphicGraph().addNode(Integer.toString(id));
 //                        fxViewPanel.getViewer().getGraphicGraph().getNode(Integer.toString(id)).setAttribute("ui.label", newAnalizer.simvoli );
-                        var row = new RowConstraints(10, 30, Double.MAX_VALUE);
+                        RowConstraints row = new RowConstraints(10, 30, Double.MAX_VALUE);
                         row.setValignment(VPos.CENTER);
                         row.setVgrow(Priority.SOMETIMES);
                         GridPane.getRowConstraints().add(row);
-                        var pattern = Pattern.compile(newAnalizer.symbols.getSymbols());
-                        var matcher = pattern.matcher(newAnalizer.simvoli);
+                        Pattern pattern = Pattern.compile(newAnalizer.symbols.getSymbols());
+                        Matcher matcher = pattern.matcher(newAnalizer.simvoli);
                         int count = 0;
                         while (matcher.find()) count++;
                         int finalCount = count;
@@ -204,7 +211,7 @@ public class Controller {
                         символов больше чем колонок
                         */
                         if (GridPane.getColumnCount() < (finalCount -1)) {
-                            var column = new ColumnConstraints();
+                            ColumnConstraints column = new ColumnConstraints();
                             column.setPercentWidth(50);
                             column.setHalignment(HPos.CENTER);
                             column.setHgrow(Priority.SOMETIMES);
@@ -216,14 +223,14 @@ public class Controller {
                         for (int i = 0; i < GridPane.getColumnCount(); i++) {
                             for (int j = 0; j < GridPane.getRowCount(); j++) {
                                 if (getNodeByRowColumnIndex(j, i, GridPane) == null) {
-                                    var label = new Label("");
+                                    Label label = new Label("");
                                     GridPane.add(label, i, j);
                                     GridPane.setHalignment(label, HPos.CENTER);
                                 }
                             }
                         }
-                        for(var k = 0; k < GridPane.getColumnCount(); k++){
-                            for (var i = GridPane.getRowCount() - 1; i > 0; i--) {
+                        for(int k = 0; k < GridPane.getColumnCount(); k++){
+                            for (int i = GridPane.getRowCount() - 1; i > 0; i--) {
                                 Label label1 = (Label) getNodeByRowColumnIndex(i - 1, k, GridPane);
                                 String label1Text = label1.getText();
                                 Label label2 = (Label) getNodeByRowColumnIndex(i, k, GridPane);
@@ -233,15 +240,19 @@ public class Controller {
                             }
                         }
                         matcher = pattern.matcher(newAnalizer.simvoli);
-                        var i = 0;
+                        int i = 0;
                         while (matcher.find()) {
                             if(i == (finalCount - 1) && newAnalizer.reduceCount != 0) {
-                                var label = (Label) getNodeByRowColumnIndex(0, GridPane.getColumnCount() - 1 - (newAnalizer.reduceCount - 1), GridPane);
+                                Label label = (Label) getNodeByRowColumnIndex(0, GridPane.getColumnCount() - 1 - (newAnalizer.reduceCount - 1), GridPane);
 //                                GridPane.setColumnSpan(label, newAnalizer.reduceCount);
-                                label.setText(newAnalizer.simvoli.substring(matcher.start(), matcher.end()));
+                                label.setScaleX(2);
+                                label.setScaleY(2);
+                                label.setText(newAnalizer.simvoli.substring(matcher.start(), matcher.end()) + "\n|");
                             } else if(reduceCount == 0){
-                                var label = (Label) getNodeByRowColumnIndex(0, 0, GridPane);
+                                Label label = (Label) getNodeByRowColumnIndex(0, 0, GridPane);
 //                                GridPane.setColumnSpan(label, GridPane.getColumnCount());
+                                label.setScaleX(2);
+                                label.setScaleY(2);
                                 label.setText(newAnalizer.simvoli.substring(matcher.start(), matcher.end()));
                             }
                             i++;

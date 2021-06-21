@@ -2,7 +2,22 @@ package sample;
 
 import java.util.Arrays;
 
-public record Key(String[] values) {
+public final class Key {
+    private final String[] values;
+
+    public Key(String[] values) {
+        this.values = values;
+    }
+
+    public String[] values() {
+        return values;
+    }
+
+    @Override
+    public String toString() {
+        return "Key[" +
+                "values=" + values + ']';
+    }
 
     @Override
     public boolean equals(Object another) {
@@ -22,12 +37,6 @@ public record Key(String[] values) {
     @Override
     public int hashCode() {
         return Arrays.hashCode(this.values);
-    }
-
-    @Override
-    public String toString() {
-        return "Key[" +
-                "values=" + values + ']';
     }
 
 }
